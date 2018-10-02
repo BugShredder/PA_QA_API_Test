@@ -1,0 +1,80 @@
+Feature: Daily Songs API
+
+  As a publisher
+  I want to be able to create lists
+  so that I can release a song each day
+
+  Scenario Outline: Post a video
+    Given I generate restful request to post a video using  "<artist>" "<song>" "<published_date>"
+    Then I receive successful response "<status>"
+    And post response contains id created date "<song>"  "<artist>" "<published_date>"
+    Examples:
+      | status |  artist     | song        | published_date            |
+      | 201    |  Lady Gaga  | Poker face  | 2017-09-01T00:00:00.000Z  |
+      | 201    |  Ed Sheeran | Galway Girl | 2013-02-01T00:00:00.000Z  |
+
+  Scenario: Update a video
+    Given I generate a restful request to update a video using id "5bb279423415a30011310a4d"
+    Then I get "501" "Not Implemented" response
+
+Scenario: Get list of videos
+  Given I generate restful request to get all videos
+  Then I receive successful response "200"
+  Then I get all videos in the list
+
+  Scenario Outline: Get a video
+    Given I generate restful request for a video using "<id>"
+    Then I receive successful response "<status>"
+    And get response contains  "<id>" "<artist>" "<song>" "<published_date>" "<__v>" "<date_created>"
+    Examples:
+      | status | id                       | artist     | song        | published_date            | __v | date_created             |
+      | 200    | 5bb3de84c8f0250053009795 | Lady Gaga  | Poker face  | 2017-09-01T00:00:00.000Z  | 0   | 2018-09-30T22:01:47.852Z |
+      | 200    | 5bb3de84c8f0250053009796 | Ed Sheeran | Galway Girl | 2013-02-01T00:00:00.000Z  | 0   | 2017-07-17T14:03:29.649Z |
+
+
+  Scenario Outline: Delete a video
+    Given I generate restful request to post a video using  "<artist>" "<song>" "<published_date>"
+    When  I generate a restful request to delete a video using newSongID
+    Then I receive successful response "<status>"
+  Examples:
+  | status |  artist     | song        | published_date            |
+  | 204    |  Ed Sheeran | Galway Girl | 2013-02-01T00:00:00.000Z  |
+
+  Scenario: Get all playlists
+    Given I generate restful request to get all playlists
+    Then I receive successful response "200"
+    Then I get all playlists
+
+    Scenario: Get a playlist
+      Given I generate restful request to get a playlist using "5bb3ccb3d3db750047170cd8"
+      Then I receive successful response "200"
+      And response contains following list details
+        | status | _id                     | desc            | title   |
+        | 200    |5bb3ccb3d3db750047170cd8 | List for my use.| My List |
+      And response contains following videos
+        | publishDate             | hidden      | _id                     | song        | artist       | date_created             | __v  |
+        |2013-02-01T00:00:00.000Z | false       | 596cac389f0525001db52244| Galway Girl | Ed Sheeran   | 2017-07-17T12:23:20.639Z |0     |
+        | NA                      | true        | 596cabbe9f0525001db52242| null        | null         | null                     | null |
+
+      Scenario: Create playlist
+        Given I generate restful request to post playlist
+        | desc | title |
+        | List for my use.| My List |
+        Then I receive successful response "201"
+        And response contains id and date_created
+
+    Scenario Outline: Update playlist
+      Given I generate restful request to update playlist "5bb3cc79d3db750047170cd7" "<_id>" "<action>"
+      Then I receive successful response "<status>"
+      Examples:
+        | _id | action | status |
+        | 596cac389f0525001db52244 | add | 204 |
+        | 596cabbe9f0525001db52242 | add | 204 |
+        | 596cabbe9f0525001db52242 | remove | 501 |
+
+      Scenario: Delete playlist
+        Given I generate restful request to post playlist
+          | desc | title |
+          | List for my use.| My List |
+        When I generate a restful request to delete playlist using newID
+        Then I receive successful response "204"
